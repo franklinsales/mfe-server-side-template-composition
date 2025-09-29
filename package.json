@@ -1,0 +1,38 @@
+{
+  "name": "microshop-microfrontends",
+  "version": "1.0.0",
+  "description": "Demonstração de microfrontends com server side template composition",
+  "scripts": {
+    "build": "./build-all.sh",
+    "start": "cd server && npm start",
+    "dev": "./dev.sh",
+    "check": "./check.sh",
+    "clean": "rm -rf dist/*",
+    "install-deps": "cd server && npm install && cd ../microfrontends/header && npm install && cd ../products && npm install && cd ../cart && npm install"
+  },
+  "microfrontends": {
+    "header": {
+      "version": "1.2.0",
+      "path": "./microfrontends/header",
+      "build_output": "./dist/header",
+      "vite_version": "7.1.7"
+    },
+    "products": {
+      "version": "1.2.0", 
+      "path": "./microfrontends/products",
+      "build_output": "./dist/products",
+      "vite_version": "7.1.7"
+    },
+    "cart": {
+      "version": "1.2.0",
+      "path": "./microfrontends/cart", 
+      "build_output": "./dist/cart",
+      "vite_version": "7.1.7"
+    }
+  },
+  "keywords": ["microfrontends", "react", "vite", "server-side-composition"],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/microshop-microfrontends"
+  }
+}
