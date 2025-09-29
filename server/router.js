@@ -16,7 +16,6 @@ class MicrofrontendRouter {
     const path = window.location.pathname;
     if (path === '/' || path === '/products') return 'products';
     if (path === '/cart') return 'cart';
-    if (path === '/about') return 'about';
     return 'products'; // fallback
   }
 

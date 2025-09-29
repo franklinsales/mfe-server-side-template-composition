@@ -96,7 +96,7 @@ class GlobalStore {
 
   handleRouteChange() {
     const path = window.location.pathname.slice(1) || 'products';
-    const validRoutes = ['products', 'cart', 'about'];
+    const validRoutes = ['products', 'cart'];
     const route = validRoutes.includes(path) ? path : 'products';
     
     this.setState({ currentRoute: route });

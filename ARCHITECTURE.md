@@ -14,8 +14,7 @@ Este projeto implementa um padrão **Server-Side Template Composition** para mic
 ├── microfrontends/
 │   ├── header/           # Microfrontend de navegação
 │   ├── products/         # Microfrontend de catálogo
-│   ├── cart/             # Microfrontend de carrinho
-│   └── about/            # Microfrontend de informações
+│   └── cart/             # Microfrontend de carrinho
 ├── shared/
 │   ├── store.js          # Store global para comunicação entre MFEs
 │   └── components/       # Componentes compartilhados

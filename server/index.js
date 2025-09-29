@@ -36,8 +36,7 @@ app.get('/health', (req, res) => {
     microfrontends: {
       header: process.env.MICROFRONTEND_HEADER_VERSION || '1.0.0',
       products: process.env.MICROFRONTEND_PRODUCTS_VERSION || '1.0.0',
-      cart: process.env.MICROFRONTEND_CART_VERSION || '1.0.0',
-      about: process.env.MICROFRONTEND_ABOUT_VERSION || '1.0.0'
+      cart: process.env.MICROFRONTEND_CART_VERSION || '1.0.0'
     }
   });
 });
@@ -53,10 +52,10 @@ app.get('/metrics', (req, res) => {
 });
 
 // Servir assets de todos os microfrontends
+// Serve arquivos estáticos dos microfrontends
 app.use('/header', express.static(path.resolve(__dirname, '../dist/header')));
 app.use('/products', express.static(path.resolve(__dirname, '../dist/products')));
 app.use('/cart', express.static(path.resolve(__dirname, '../dist/cart')));
-app.use('/about', express.static(path.resolve(__dirname, '../dist/about')));
 app.use('/shared', express.static(path.resolve(__dirname, '../shared')));
 
 // Serve o router dedicado
@@ -91,24 +90,21 @@ const handleRoutes = async (req, res) => {
     const headerPath = path.resolve(__dirname, '../dist/header/index.html');
     const productsPath = path.resolve(__dirname, '../dist/products/index.html');
     const cartPath = path.resolve(__dirname, '../dist/cart/index.html');
-    const aboutPath = path.resolve(__dirname, '../dist/about/index.html');
 
-    const [headerHtml, productsHtml, cartHtml, aboutHtml] = await Promise.all([
+    const [headerHtml, productsHtml, cartHtml] = await Promise.all([
       fs.readFile(headerPath, 'utf-8'),
       fs.readFile(productsPath, 'utf-8'),
-      fs.readFile(cartPath, 'utf-8'),
-      fs.readFile(aboutPath, 'utf-8')
+      fs.readFile(cartPath, 'utf-8')
     ]);
 
     // Extrai os assets de cada microfrontend
     const headerAssets = extractAssets(headerHtml);
     const productsAssets = extractAssets(productsHtml);
     const cartAssets = extractAssets(cartHtml);
-    const aboutAssets = extractAssets(aboutHtml);
 
     // Combina todos os CSS e JS
-    const allStyles = [...headerAssets.styles, ...productsAssets.styles, ...cartAssets.styles, ...aboutAssets.styles];
-    const allScripts = [...headerAssets.scripts, ...productsAssets.scripts, ...cartAssets.scripts, ...aboutAssets.scripts];
+    const allStyles = [...headerAssets.styles, ...productsAssets.styles, ...cartAssets.styles];
+    const allScripts = [...headerAssets.scripts, ...productsAssets.scripts, ...cartAssets.scripts];
 
     // Template principal que compõe todos os microfrontends
     const composedTemplate = `
@@ -194,11 +190,6 @@ const handleRoutes = async (req, res) => {
             <div id="page-cart" class="page-section">
                 <div id="cart-root"></div>
             </div>
-            
-            <!-- Página Sobre -->
-            <div id="page-about" class="page-section">
-                <div id="about-root"></div>
-            </div>
         </main>
     </div>
 
@@ -241,7 +232,6 @@ const handleRoutes = async (req, res) => {
 app.get('/', handleRoutes);
 app.get('/products', handleRoutes);
 app.get('/cart', handleRoutes);
-app.get('/about', handleRoutes);
 
 app.listen(PORT, () => {
   console.log(`🚀 Shell App rodando em http://${HOST}:${PORT}`);
