@@ -23,6 +23,20 @@ rm -rf node_modules package-lock.json
 npm install --silent
 npm run build
 
+# Build About
+echo "📦 Buildando About..."
+cd ../about
+rm -rf node_modules package-lock.json
+npm install --silent
+npm run build
+
+# Build Profile
+echo "📦 Buildando Profile..."
+cd ../profile
+rm -rf node_modules package-lock.json
+npm install --silent
+npm run build
+
 # Install server dependencies
 echo "📦 Instalando dependências do servidor..."
 cd ../../server

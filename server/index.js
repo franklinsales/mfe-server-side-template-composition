@@ -36,7 +36,8 @@ app.get('/health', (req, res) => {
     microfrontends: {
       header: process.env.MICROFRONTEND_HEADER_VERSION || '1.0.0',
       products: process.env.MICROFRONTEND_PRODUCTS_VERSION || '1.0.0',
-      cart: process.env.MICROFRONTEND_CART_VERSION || '1.0.0'
+      cart: process.env.MICROFRONTEND_CART_VERSION || '1.0.0',
+      about: process.env.MICROFRONTEND_ABOUT_VERSION || '1.0.0'
     }
   });
 });
@@ -55,7 +56,13 @@ app.get('/metrics', (req, res) => {
 app.use('/header', express.static(path.resolve(__dirname, '../dist/header')));
 app.use('/products', express.static(path.resolve(__dirname, '../dist/products')));
 app.use('/cart', express.static(path.resolve(__dirname, '../dist/cart')));
+app.use('/about', express.static(path.resolve(__dirname, '../dist/about')));
 app.use('/shared', express.static(path.resolve(__dirname, '../shared')));
+
+// Serve o router dedicado
+app.get('/router.js', (req, res) => {
+  res.sendFile(path.resolve(__dirname, 'router.js'));
+});
 
 // Função para extrair assets (CSS e JS) de um arquivo HTML
 const extractAssets = (html) => {
@@ -78,27 +85,30 @@ const extractAssets = (html) => {
 };
 
 // Exemplo de template composition server-side
-app.get('/', async (req, res) => {
+const handleRoutes = async (req, res) => {
   try {
     // Carrega os templates dos microfrontends
     const headerPath = path.resolve(__dirname, '../dist/header/index.html');
     const productsPath = path.resolve(__dirname, '../dist/products/index.html');
     const cartPath = path.resolve(__dirname, '../dist/cart/index.html');
+    const aboutPath = path.resolve(__dirname, '../dist/about/index.html');
 
-    const [headerHtml, productsHtml, cartHtml] = await Promise.all([
+    const [headerHtml, productsHtml, cartHtml, aboutHtml] = await Promise.all([
       fs.readFile(headerPath, 'utf-8'),
       fs.readFile(productsPath, 'utf-8'),
-      fs.readFile(cartPath, 'utf-8')
+      fs.readFile(cartPath, 'utf-8'),
+      fs.readFile(aboutPath, 'utf-8')
     ]);
 
     // Extrai os assets de cada microfrontend
     const headerAssets = extractAssets(headerHtml);
     const productsAssets = extractAssets(productsHtml);
     const cartAssets = extractAssets(cartHtml);
+    const aboutAssets = extractAssets(aboutHtml);
 
     // Combina todos os CSS e JS
-    const allStyles = [...headerAssets.styles, ...productsAssets.styles, ...cartAssets.styles];
-    const allScripts = [...headerAssets.scripts, ...productsAssets.scripts, ...cartAssets.scripts];
+    const allStyles = [...headerAssets.styles, ...productsAssets.styles, ...cartAssets.styles, ...aboutAssets.styles];
+    const allScripts = [...headerAssets.scripts, ...productsAssets.scripts, ...cartAssets.scripts, ...aboutAssets.scripts];
 
     // Template principal que compõe todos os microfrontends
     const composedTemplate = `
@@ -113,33 +123,107 @@ app.get('/', async (req, res) => {
     ${allStyles.map(style => `<link rel="stylesheet" crossorigin href="${style}">`).join('\n    ')}
     
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f5f6fa; }
-        .container { min-height: 100vh; display: flex; flex-direction: column; }
-        main { flex: 1; }
-        .section { margin: 2rem 0; }
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+        }
+        
+        body { 
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+            background: #f8fafc;
+            line-height: 1.6;
+            color: #2d3748;
+            width: 100%;
+            overflow-x: hidden;
+        }
+        
+        .app-container { 
+            min-height: 100vh; 
+            display: flex; 
+            flex-direction: column; 
+            width: 100%;
+        }
+        
+        main { 
+            flex: 1; 
+            padding: 0;
+            width: 100%;
+            min-height: calc(100vh - 120px);
+        }
+        
+        .page-section { 
+            display: none; 
+            animation: fadeIn 0.3s ease-in-out;
+            width: 100%;
+            min-height: 100%;
+        }
+        }
+        
+        .page-section.active {
+            display: block;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            main {
+                padding: 1rem;
+            }
+        }
     </style>
 </head>
 <body>
-    <div class="container">
+    <div class="app-container">
         <!-- Header Microfrontend -->
-        <div id="header-root"></div>
+        <header>
+            <div id="header-root"></div>
+        </header>
         
         <main>
-            <!-- Products Microfrontend -->
-            <section class="section">
+            <!-- Página Produtos (Home) -->
+            <div id="page-products" class="page-section active">
                 <div id="products-root"></div>
-            </section>
+            </div>
             
-            <!-- Cart Microfrontend -->
-            <section class="section">
+            <!-- Página Carrinho -->
+            <div id="page-cart" class="page-section">
                 <div id="cart-root"></div>
-            </section>
+            </div>
+            
+            <!-- Página Sobre -->
+            <div id="page-about" class="page-section">
+                <div id="about-root"></div>
+            </div>
         </main>
     </div>
 
     <!-- Store Global -->
     <script type="module" src="/shared/store.js"></script>
+    
+    <!-- Microfrontend Router -->
+    <script type="module" src="/router.js"></script>
+    
+    <!-- SPA Router Script -->
+    <script type="module">
+        // Inicialização do sistema de roteamento
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.microfrontendRouter) {
+                window.microfrontendRouter.init();
+                
+                // Integra com o store global
+                if (window.globalStore) {
+                    window.microfrontendRouter.onRouteChange((currentRoute) => {
+                        window.globalStore.setState({ currentRoute });
+                    });
+                }
+            }
+        });
+    </script>
     
     <!-- Scripts dos Microfrontends -->
     ${allScripts.map(script => `<script type="module" crossorigin src="${script}"></script>`).join('\n    ')}
@@ -151,7 +235,13 @@ app.get('/', async (req, res) => {
     console.error('Erro ao compor template:', error);
     res.status(500).send('Erro interno do servidor');
   }
-});
+};
+
+// Rotas principais
+app.get('/', handleRoutes);
+app.get('/products', handleRoutes);
+app.get('/cart', handleRoutes);
+app.get('/about', handleRoutes);
 
 app.listen(PORT, () => {
   console.log(`🚀 Shell App rodando em http://${HOST}:${PORT}`);

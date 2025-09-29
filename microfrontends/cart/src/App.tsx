@@ -57,7 +57,7 @@ function App() {
 
   if (cartItems.length === 0) {
     return (
-      <div className="cart-container">
+      <div className="cart-container" id="cart">
         <h2>Seu Carrinho</h2>
         <div className="empty-cart">
           <p>Seu carrinho está vazio</p>
@@ -68,7 +68,7 @@ function App() {
   }
 
   return (
-    <div className="cart-container">
+    <div className="cart-container" id="cart">
       <h2>Seu Carrinho</h2>
       <div className="cart-items">
         {cartItems.map((item) => (

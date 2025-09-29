@@ -64,7 +64,7 @@ function App() {
   };
 
   return (
-    <div className="container">
+    <div className="container" id="products">
       <h2 className="title">Nossos Produtos</h2>
       <div className="grid">
         {products.map(product => (

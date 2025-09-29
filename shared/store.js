@@ -1,21 +1,20 @@
-// Estado global compartilhado entre microfrontends
 class GlobalStore {
   constructor() {
     this.state = {
       cart: [],
       user: { name: 'João Silva', email: 'joao@email.com' },
       loading: false,
-      error: null
+      error: null,
+      currentRoute: 'products'
     };
     this.listeners = [];
-    this.debug = process?.env?.NODE_ENV === 'development' || window.location.hostname === 'localhost';
-    
-    this.log('🏪 Store inicializado');
+    this.debug = true;
+    this.initializeRouter();
   }
 
-  log(message, data = null) {
+  log(message, data) {
     if (this.debug) {
-      console.log(`[GlobalStore] ${message}`, data || '');
+      console.log('[Store]', message, data || '');
     }
   }
 
@@ -24,18 +23,14 @@ class GlobalStore {
   }
 
   setState(newState) {
-    const prevState = { ...this.state };
     this.state = { ...this.state, ...newState };
-    this.log('📊 Estado atualizado', { prevState, newState: this.state });
     this.notify();
   }
 
   subscribe(listener) {
     this.listeners.push(listener);
-    this.log(`👂 Novo listener registrado (total: ${this.listeners.length})`);
     return () => {
       this.listeners = this.listeners.filter(l => l !== listener);
-      this.log(`👋 Listener removido (total: ${this.listeners.length})`);
     };
   }
 
@@ -44,15 +39,12 @@ class GlobalStore {
       try {
         listener(this.state);
       } catch (error) {
-        console.error('[GlobalStore] Erro ao notificar listener:', error);
+        console.error('Erro no listener:', error);
       }
     });
   }
 
-  // Actions específicas
   addToCart(product) {
-    this.log('🛒 Adicionando produto ao carrinho', product);
-    
     const existingItem = this.state.cart.find(item => item.id === product.id);
     let newCart;
     
@@ -70,23 +62,12 @@ class GlobalStore {
   }
 
   removeFromCart(productId) {
-    this.log('🗑️ Removendo produto do carrinho', { productId });
     const newCart = this.state.cart.filter(item => item.id !== productId);
     this.setState({ cart: newCart });
   }
 
   clearCart() {
-    this.log('🧹 Limpando carrinho');
     this.setState({ cart: [] });
-  }
-
-  setLoading(loading) {
-    this.setState({ loading });
-  }
-
-  setError(error) {
-    this.log('❌ Erro registrado', error);
-    this.setState({ error });
   }
 
   getCartTotal() {
@@ -96,8 +77,60 @@ class GlobalStore {
   getCartItemCount() {
     return this.state.cart.reduce((total, item) => total + item.quantity, 0);
   }
+
+  initializeRouter() {
+    // Integra com o microfrontend router quando disponível
+    if (window.microfrontendRouter) {
+      window.microfrontendRouter.onRouteChange((currentRoute) => {
+        this.setState({ currentRoute });
+      });
+    } else {
+      // Fallback para popstate direto
+      window.addEventListener('popstate', () => {
+        this.handleRouteChange();
+      });
+    }
+    
+    this.handleRouteChange();
+  }
+
+  handleRouteChange() {
+    const path = window.location.pathname.slice(1) || 'products';
+    const validRoutes = ['products', 'cart', 'about'];
+    const route = validRoutes.includes(path) ? path : 'products';
+    
+    this.setState({ currentRoute: route });
+    this.showCurrentPage(route);
+  }
+
+  navigateTo(route) {
+    if (window.microfrontendRouter) {
+      window.microfrontendRouter.navigateTo(route);
+    } else {
+      // Fallback para history API
+      window.history.pushState({}, '', '/' + route);
+      this.handleRouteChange();
+    }
+  }
+
+  showCurrentPage(route) {
+    setTimeout(() => {
+      document.querySelectorAll('.page-section').forEach(section => {
+        section.classList.remove('active');
+      });
+      
+      const targetSection = document.querySelector('#page-' + route);
+      if (targetSection) {
+        targetSection.classList.add('active');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    }, 50);
+  }
+
+  getCurrentRoute() {
+    return this.state.currentRoute;
+  }
 }
 
-// Instância global
 window.globalStore = window.globalStore || new GlobalStore();
 export default window.globalStore;

@@ -9,6 +9,7 @@ interface User {
 interface GlobalState {
   cart: Array<{ id: number; quantity: number }>;
   user: User;
+  currentRoute: string;
 }
 
 declare global {
@@ -17,13 +18,16 @@ declare global {
       getState(): GlobalState;
       subscribe(callback: (state: GlobalState) => void): () => void;
       getCartItemCount(): number;
+      navigateTo(route: string): void;
+      getCurrentRoute(): string;
     };
   }
 }
 
-function App() {
+function Navigation() {
   const [cartCount, setCartCount] = useState(0)
   const [user, setUser] = useState<User | null>(null)
+  const [currentRoute, setCurrentRoute] = useState('products')
 
   useEffect(() => {
     // Conecta com o store global
@@ -31,6 +35,7 @@ function App() {
       const updateState = (state: GlobalState) => {
         setCartCount(window.globalStore?.getCartItemCount() || 0);
         setUser(state.user);
+        setCurrentRoute(state.currentRoute);
       };
 
       // Estado inicial
@@ -38,26 +43,51 @@ function App() {
 
       // Subscreve às mudanças
       const unsubscribe = window.globalStore.subscribe(updateState);
+      
       return unsubscribe;
     }
   }, []);
 
   return (
     <header className="header">
-      <div className="logo">🛍️ MicroShop</div>
+      <a href="/products" className="logo">
+        🛍️ MicroShop
+      </a>
       
       <nav className="nav">
-        <a href="#products" className="nav-link">Produtos</a>
-        <a href="#cart" className="nav-link">Carrinho</a>
-        <a href="#about" className="nav-link">Sobre</a>
+        <a 
+          href="/products" 
+          className={`nav-link ${currentRoute === 'products' ? 'active' : ''}`}
+        >
+          Produtos
+        </a>
+        <a 
+          href="/cart" 
+          className={`nav-link ${currentRoute === 'cart' ? 'active' : ''}`}
+        >
+          Carrinho
+        </a>
       </nav>
 
       <div className="user-info">
-        {user && <span>Olá, {user.name}!</span>}
-        <div className="cart-badge">{cartCount}</div>
+        {user && (
+          <span className="user-name">
+            Olá, {user.name}!
+          </span>
+        )}
+        <a 
+          href="/cart"
+          className={`cart-badge ${currentRoute === 'cart' ? 'active' : ''}`}
+        >
+          {cartCount}
+        </a>
       </div>
     </header>
   )
+}
+
+function App() {
+  return <Navigation />
 }
 
 export default App
